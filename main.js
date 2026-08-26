@@ -123,6 +123,36 @@ async function main() {
           }
         }
 
+        // 免费包升级领取VIP（抓包接口 upgrade_vip_reward，每次可领 recharge_hours 小时）
+        printYellow("开始领取免费包升级VIP...")
+        let freeVip = '未执行'
+        try {
+          const upgradeList = await send(`/youth/free/upgrade/list?timestrap=${Date.now()}`, "GET", headers)
+          const canUpgrade = upgradeList?.status === 1 && upgradeList?.data?.hash_upgrade === 1
+          if (canUpgrade) {
+            const reward = await send(`/youth/free/vip/reward?timestrap=${Date.now()}`, "POST", headers)
+            if (reward.status === 1) {
+              const hours = reward.data?.recharge_hours || 0
+              printGreen(`免费包升级VIP领取成功 +${hours}h`)
+              freeVip = `成功 +${hours}h`
+            } else if (reward.error_code === 30002 || reward.error_code === 130012) {
+              printGreen("免费包升级VIP今日已领取")
+              freeVip = '今日已领取'
+            } else {
+              printRed(`免费包升级VIP领取失败: ${summarizeResponse(reward)}`)
+              errorMsg[`${safeNickname} freeVip`] = summarizeResponse(reward)
+              hasError = true
+              freeVip = '失败'
+            }
+          } else {
+            printYellow("免费包升级暂无可领取奖励")
+            freeVip = '暂无可领'
+          }
+        } catch (err) {
+          printRed(`免费包升级VIP请求异常: ${err.message}`)
+          freeVip = '异常'
+        }
+
         let vipExpiry = '未知'
         const vip_details = await send(`/user/vip/detail?timestrap=${Date.now()}`, "GET", headers)
         if (vip_details.status === 1 && Array.isArray(vip_details.data?.busi_vip) && vip_details.data.busi_vip.length > 0) {
@@ -140,6 +170,7 @@ async function main() {
           status: listenStatus === '失败' || claimCount === 0 ? '部分失败' : '成功',
           listen: listenStatus,
           vipClaim: `${claimCount}/${claimTotal}`,
+          freeVip,
           vipExpiry,
           error: ''
         })
@@ -194,6 +225,7 @@ async function main() {
     content += `\n【${r.nickname}】\n`
     content += `  🎵 听歌领取: ${r.listen}\n`
     content += `  🎁 VIP领取: ${r.vipClaim} 次\n`
+    content += `  🎁 免费包升级: ${r.freeVip || '-'}\n`
     content += `  ⏰ VIP到期: ${r.vipExpiry}\n`
     if (r.error) {
       content += `  ⚠️ 错误: ${r.error}\n`

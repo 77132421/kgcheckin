@@ -135,12 +135,12 @@ async function main() {
               const hours = reward.data?.recharge_hours || 0
               printGreen(`免费包升级VIP领取成功 +${hours}h`)
               freeVip = `成功 +${hours}h`
-            } else if (reward.error_code === 30002 || reward.error_code === 130012) {
+            } else if ([30002, 130012, 20028].includes(reward.error_code)) {
               printGreen("免费包升级VIP今日已领取")
               freeVip = '今日已领取'
             } else {
-              printRed(`免费包升级VIP领取失败: ${summarizeResponse(reward)}`)
-              errorMsg[`${safeNickname} freeVip`] = summarizeResponse(reward)
+              printRed(`免费包升级VIP领取失败: error_code=${reward.error_code} ${reward.msg || reward.message || ''}`)
+              errorMsg[`${safeNickname} freeVip`] = { status: reward.status, error_code: reward.error_code, msg: reward.msg || reward.message }
               hasError = true
               freeVip = '失败'
             }

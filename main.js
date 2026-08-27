@@ -80,6 +80,28 @@ async function main() {
           }
         }
 
+        // 一键激活领取当天VIP（对应APP「一键激活使用」按钮，抓包接口 receive_vip_award）
+        printYellow("一键激活领取VIP...")
+        let awardStatus = '未执行'
+        try {
+          const award = await send(`/youth/free/receive/award?timestrap=${Date.now()}&receive_day=${date}`, "POST", headers)
+          if (award.status === 1) {
+            printGreen(`一键激活领取成功: ${award.data?.vip_type || 'VIP'} 订单=${award.data?.order_no || '-'}`)
+            awardStatus = `成功 ${award.data?.vip_type || 'VIP'}`
+          } else if ([30002, 130012, 20028].includes(award.error_code)) {
+            printGreen("一键激活今日已领取")
+            awardStatus = '今日已领取'
+          } else {
+            printRed(`一键激活领取失败: error_code=${award.error_code} ${award.msg || award.message || ''}`)
+            errorMsg[`${safeNickname} award`] = { status: award.status, error_code: award.error_code, msg: award.msg || award.message }
+            hasError = true
+            awardStatus = '失败'
+          }
+        } catch (err) {
+          printRed(`一键激活请求异常: ${err.message}`)
+          awardStatus = '异常'
+        }
+
         // 开始听歌
         printYellow(`开始听歌领取VIP...`)
         // 听歌获取vip
@@ -168,6 +190,7 @@ async function main() {
           status: listenStatus === '失败' || claimCount === 0 ? '部分失败' : '成功',
           listen: listenStatus,
           vipClaim: `${claimCount}/${claimTotal}`,
+          award: awardStatus,
           freeVip,
           vipExpiry,
           error: ''
@@ -221,6 +244,7 @@ async function main() {
 
   for (const r of notifyResults) {
     content += `\n【${r.nickname}】\n`
+    content += `  🎁 一键激活: ${r.award || '-'}\n`
     content += `  🎵 听歌领取: ${r.listen}\n`
     content += `  🎁 VIP领取: ${r.vipClaim} 次\n`
     content += `  🎁 免费包升级: ${r.freeVip || '-'}\n`

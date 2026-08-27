@@ -85,6 +85,8 @@ async function main() {
         let awardStatus = '未执行'
         try {
           const award = await send(`/youth/free/receive/award?timestrap=${Date.now()}&receive_day=${date}`, "POST", headers)
+          // 先打印真实返回，便于排查
+          printYellow(`一键激活接口返回: status=${award.status}, error_code=${award.error_code}, error_msg=${award.msg || award.message || award.error_msg || ''}`)
           if (award.status === 1) {
             printGreen(`一键激活领取成功: ${award.data?.vip_type || 'VIP'} 订单=${award.data?.order_no || '-'}`)
             awardStatus = `成功 ${award.data?.vip_type || 'VIP'}`

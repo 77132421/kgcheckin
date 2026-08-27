@@ -127,26 +127,24 @@ async function main() {
         printYellow("开始领取免费包升级VIP...")
         let freeVip = '未执行'
         try {
+          // 查询状态（仅用于日志参考，不阻塞领取）
           const upgradeList = await send(`/youth/free/upgrade/list?timestrap=${Date.now()}`, "GET", headers)
-          const canUpgrade = upgradeList?.status === 1 && upgradeList?.data?.hash_upgrade === 1
-          if (canUpgrade) {
-            const reward = await send(`/youth/free/vip/reward?timestrap=${Date.now()}`, "POST", headers)
-            if (reward.status === 1) {
-              const hours = reward.data?.recharge_hours || 0
-              printGreen(`免费包升级VIP领取成功 +${hours}h`)
-              freeVip = `成功 +${hours}h`
-            } else if ([30002, 130012, 20028].includes(reward.error_code)) {
-              printGreen("免费包升级VIP今日已领取")
-              freeVip = '今日已领取'
-            } else {
-              printRed(`免费包升级VIP领取失败: error_code=${reward.error_code} ${reward.msg || reward.message || ''}`)
-              errorMsg[`${safeNickname} freeVip`] = { status: reward.status, error_code: reward.error_code, msg: reward.msg || reward.message }
-              hasError = true
-              freeVip = '失败'
-            }
+          const listData = upgradeList?.data || {}
+          printYellow(`免费包状态: hash_upgrade=${listData.hash_upgrade} upgrade_sign=${listData.upgrade_sign}`)
+          // 直接尝试领取：服务器给资格即成功，否则返回对应错误码
+          const reward = await send(`/youth/free/vip/reward?timestrap=${Date.now()}`, "POST", headers)
+          if (reward.status === 1) {
+            const hours = reward.data?.recharge_hours || 0
+            printGreen(`免费包升级VIP领取成功 +${hours}h`)
+            freeVip = `成功 +${hours}h`
+          } else if ([30002, 130012, 20028].includes(reward.error_code)) {
+            printGreen("免费包升级VIP今日已领取")
+            freeVip = '今日已领取'
           } else {
-            printYellow("免费包升级暂无可领取奖励")
-            freeVip = '暂无可领'
+            printRed(`免费包升级VIP领取失败: error_code=${reward.error_code} ${reward.msg || reward.message || ''}`)
+            errorMsg[`${safeNickname} freeVip`] = { status: reward.status, error_code: reward.error_code, msg: reward.msg || reward.message }
+            hasError = true
+            freeVip = '失败'
           }
         } catch (err) {
           printRed(`免费包升级VIP请求异常: ${err.message}`)

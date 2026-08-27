@@ -187,6 +187,26 @@ async function main() {
           hasError = true
         }
 
+        // 查询最近领取记录，确认当天是否入账
+        try {
+          const records = await send(`/youth/free/vip/record?timestrap=${Date.now()}`, "GET", headers)
+          if (records.status === 1 && Array.isArray(records.data?.list) && records.data.list.length > 0) {
+            const recent = records.data.list.slice(0, 3)
+            printBlue('最近领取记录:')
+            for (const r of recent) {
+              printBlue(`  ${r.day}  ${r.vip_type}  receive_vip=${r.receive_vip}`)
+            }
+            const todayRec = records.data.list.find(r => r.day === date)
+            if (todayRec) {
+              printMagenta(`今天(${date}) 已入账: ${todayRec.vip_type} receive_vip=${todayRec.receive_vip}`)
+            } else {
+              printRed(`今天(${date}) 暂无领取记录`)
+            }
+          }
+        } catch (err) {
+          printYellow(`查询领取记录失败: ${err.message}`)
+        }
+
         notifyResults.push({
           nickname: safeNickname,
           status: listenStatus === '失败' || claimCount === 0 ? '部分失败' : '成功',

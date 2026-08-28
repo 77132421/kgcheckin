@@ -90,15 +90,15 @@ async function main() {
           if (award.status === 1) {
             printGreen(`一键激活领取成功: ${award.data?.vip_type || 'VIP'} 订单=${award.data?.order_no || '-'}`)
             awardStatus = `成功 ${award.data?.vip_type || 'VIP'}`
-          } else if ([30002, 130012].includes(award.error_code)) {
+          } else if ([30002, 130012, 131001].includes(award.error_code)) {
             printGreen("一键激活今日已领取")
             awardStatus = '今日已领取'
-          } else if (award.error_code === 20028) {
-            printYellow("一键激活今日未开放/无资格（服务器不给，非脚本问题）")
-            awardStatus = '今日未开放'
+          } else if (award.error_code === 20028 || award.error_code === 297002) {
+            printYellow("一键激活今日未开放/已达上限（服务器不给，非脚本问题）")
+            awardStatus = '未开放/已达上限'
           } else {
-            printRed(`一键激活领取失败: error_code=${award.error_code} ${award.msg || award.message || ''}`)
-            errorMsg[`${safeNickname} award`] = { status: award.status, error_code: award.error_code, msg: award.msg || award.message }
+            printRed(`一键激活领取失败: error_code=${award.error_code} ${award.msg || award.message || award.error_msg || ''}`)
+            errorMsg[`${safeNickname} award`] = { status: award.status, error_code: award.error_code, msg: award.msg || award.message || award.error_msg }
             hasError = true
             awardStatus = '失败'
           }
@@ -164,15 +164,15 @@ async function main() {
             const hours = reward.data?.recharge_hours || 0
             printGreen(`免费包升级VIP领取成功 +${hours}h`)
             freeVip = `成功 +${hours}h`
-          } else if ([30002, 130012].includes(reward.error_code)) {
+          } else if ([30002, 130012, 131001].includes(reward.error_code)) {
             printGreen("免费包升级VIP今日已领取")
             freeVip = '今日已领取'
-          } else if (reward.error_code === 20028) {
-            printYellow("免费包升级今日未开放/无资格（服务器不给，非脚本问题）")
-            freeVip = '今日未开放'
+          } else if (reward.error_code === 20028 || reward.error_code === 297002) {
+            printYellow("免费包升级今日已领取/未开放（服务器不给，非脚本问题）")
+            freeVip = '已领取/未开放'
           } else {
-            printRed(`免费包升级VIP领取失败: error_code=${reward.error_code} ${reward.msg || reward.message || ''}`)
-            errorMsg[`${safeNickname} freeVip`] = { status: reward.status, error_code: reward.error_code, msg: reward.msg || reward.message }
+            printRed(`免费包升级VIP领取失败: error_code=${reward.error_code} ${reward.msg || reward.message || reward.error_msg || ''}`)
+            errorMsg[`${safeNickname} freeVip`] = { status: reward.status, error_code: reward.error_code, msg: reward.msg || reward.message || reward.error_msg }
             hasError = true
             freeVip = '失败'
           }

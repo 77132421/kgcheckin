@@ -93,14 +93,18 @@ async function main() {
           } else if ([30002, 130012, 131001].includes(award.error_code)) {
             printGreen("一键激活今日已领取")
             awardStatus = '今日已领取'
-                    } else if (award.error_code === 20028 || award.error_code === 297002) {
+          } else if (award.error_code === 20028 || award.error_code === 297002) {
             printYellow("一键激活今日未开放/已达上限（服务器不给，非脚本问题）")
             awardStatus = '未开放/已达上限'
           } else if (award.error_code === 130011) {
             printYellow("一键激活无随心包会员资格（非脚本问题）")
             awardStatus = '无随心包资格'
           } else {
-            
+            printRed(`一键激活领取失败: error_code=${award.error_code} ${award.msg || award.message || award.error_msg || ''}`)
+            errorMsg[`${safeNickname} award`] = { status: award.status, error_code: award.error_code, msg: award.msg || award.message || award.error_msg }
+            hasError = true
+            awardStatus = '失败'
+          }
         } catch (err) {
           printRed(`一键激活请求异常: ${err.message}`)
           awardStatus = '异常'
@@ -166,7 +170,7 @@ async function main() {
           } else if ([30002, 130012, 131001].includes(reward.error_code)) {
             printGreen("免费包升级VIP今日已领取")
             freeVip = '今日已领取'
-                    } else if (reward.error_code === 20028 || reward.error_code === 297002) {
+          } else if (reward.error_code === 20028 || reward.error_code === 297002) {
             printYellow("免费包升级今日已领取/未开放（服务器不给，非脚本问题）")
             freeVip = '已领取/未开放'
           } else if (reward.error_code === 297000) {
